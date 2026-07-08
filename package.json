@@ -25,8 +25,20 @@
       {
         "command": "rextio.restartServer",
         "title": "Rextio: Restart Server"
+      },
+      {
+        "command": "rextio.showRouteInfo",
+        "title": "Rextio: Show Route Info"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "rextio.showRouteInfo",
+          "when": "false"
+        }
+      ]
+    },
     "configuration": {
       "title": "Rextio",
       "properties": {
@@ -57,6 +69,16 @@
           ],
           "default": "off",
           "description": "Trace communication between VS Code and the Rextio language server."
+        },
+        "rextio.codeLens.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Rextio route-info code lenses above analysed functions. Sent to the server as initializationOptions.codeLens.enable."
+        },
+        "rextio.interpreter.path": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the Python interpreter the server should analyse against. When empty, the server chooses its own interpreter (sent as `initializationOptions.interpreter.path: null`)."
         }
       }
     }

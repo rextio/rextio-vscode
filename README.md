@@ -20,6 +20,18 @@ The extension activates only when a workspace contains a `rextio.toml` file. It 
 
 If none launches, the **Rextio** status bar item shows a warning and a note is written to the *Rextio* output channel — no popups. Click the status bar item (or run **Rextio: Restart Server**) to retry after installing the server.
 
+## Status bar
+
+The **Rextio** status bar item (left, click to restart) shows the server state as an icon and, while the server is running, a summary of Rextio-sourced diagnostics (`source: "rextio"`) across the workspace:
+
+| State | Item | Meaning |
+| --- | --- | --- |
+| Starting | `$(sync~spin) Rextio` | Launching the language server. |
+| Running, no diagnostics | `$(check) Rextio ✓` | Server up; no Rextio diagnostics. |
+| Running, with diagnostics | `$(check) Rextio W:2 i:1` | `W` = warnings, `i` = information + hints. |
+| Stopped / disabled | `$(circle-slash) Rextio` | Server stopped, or `rextio.enable` is false. |
+| Not found | `$(warning) Rextio` | `rextio-lsp` could not be launched. |
+
 ## Settings
 
 | Setting | Type | Default | Description |
@@ -28,10 +40,25 @@ If none launches, the **Rextio** status bar item shows a warning and a note is w
 | `rextio.server.path` | string | `""` | Absolute path to the `rextio-lsp` executable. Overrides discovery. |
 | `rextio.server.args` | string[] | `[]` | Extra arguments passed to `rextio-lsp`. |
 | `rextio.trace.server` | `off` \| `messages` \| `verbose` | `off` | Trace LSP traffic to the output channel. |
+| `rextio.codeLens.enable` | boolean | `true` | Show route-info code lenses above analysed functions. Sent to the server. |
+| `rextio.interpreter.path` | string | `""` | Python interpreter the server should analyse against. Empty ⇒ `null` (server chooses). |
+
+Changing any `rextio.*` setting restarts the language client so the change (including the initialization options below) takes effect.
+
+### Initialization options
+
+At startup the client sends the server a fixed-shape `initializationOptions`, derived from the settings above:
+
+```json
+{ "codeLens": { "enable": true }, "interpreter": { "path": null } }
+```
+
+`codeLens.enable` mirrors `rextio.codeLens.enable`; `interpreter.path` is `rextio.interpreter.path` trimmed, or `null` when empty.
 
 ## Commands
 
 - **Rextio: Restart Server** (`rextio.restartServer`) — stop and relaunch the language server. Also bound to clicking the status bar item.
+- `rextio.showRouteInfo` — invoked by the server's route-info code lens with a function's qualified name. Writes `Route info requested for <qualname>` to the *Rextio* output channel and updates the status bar tooltip (no popup). Hidden from the command palette. Richer UI arrives in a later milestone.
 
 ## Development
 

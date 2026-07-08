@@ -8,8 +8,11 @@ import {
   TransportKind,
 } from 'vscode-languageclient/node';
 import { discoverServer } from './discovery';
+import { buildInitializationOptions } from './initialization';
+import { diagnosticsSummaryLabel } from './status';
 
 const RESTART_COMMAND = 'rextio.restartServer';
+const SHOW_ROUTE_INFO_COMMAND = 'rextio.showRouteInfo';
 const CONFIG_SECTION = 'rextio';
 
 let client: LanguageClient | undefined;
@@ -17,6 +20,11 @@ let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 
 type StatusKind = 'starting' | 'running' | 'stopped' | 'disabled' | 'not-found';
+
+/** Latest server state; combined with the diagnostics label in the status bar. */
+let serverStatus: StatusKind = 'starting';
+/** Latest diagnostics summary (e.g. `Rextio ✓`), shown while the server runs. */
+let diagnosticsLabel = 'Rextio ✓';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   outputChannel = vscode.window.createOutputChannel('Rextio');
@@ -29,9 +37,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push(
     vscode.commands.registerCommand(RESTART_COMMAND, () => restart()),
+    vscode.commands.registerCommand(
+      SHOW_ROUTE_INFO_COMMAND,
+      (qualname: string) => showRouteInfo(qualname),
+    ),
   );
 
-  // Restart when any rextio.* setting that affects launch changes.
+  // Restart when any rextio.* setting changes. This covers the launch settings
+  // (server.path/args) as well as the initialization options plumbed into the
+  // client (codeLens.enable, interpreter.path) and the trace level.
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration(CONFIG_SECTION)) {
@@ -39,6 +53,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     }),
   );
+
+  // Keep the status bar's diagnostics summary in step with the workspace.
+  context.subscriptions.push(
+    vscode.languages.onDidChangeDiagnostics(() => updateDiagnosticsSummary()),
+  );
+  updateDiagnosticsSummary();
 
   await start();
 }
@@ -79,6 +99,10 @@ async function start(): Promise<void> {
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: 'file', language: 'python' }],
     outputChannel,
+    initializationOptions: buildInitializationOptions({
+      codeLensEnable: config.get<boolean>('codeLens.enable', true),
+      interpreterPath: config.get<string>('interpreter.path', ''),
+    }),
     synchronize: {
       fileEvents: vscode.workspace.createFileSystemWatcher('**/rextio.toml'),
     },
@@ -129,29 +153,66 @@ async function restart(): Promise<void> {
   await start();
 }
 
+/**
+ * Code-lens action invoked by the server with a route's qualified name. Surfaces
+ * a quiet notice — an output-channel line plus a status-bar tooltip — rather
+ * than a modal popup. Richer UI arrives in a later milestone.
+ */
+function showRouteInfo(qualname: string): void {
+  const name = typeof qualname === 'string' && qualname.length > 0 ? qualname : '<unknown>';
+  const message = `Route info requested for ${name}`;
+  outputChannel.appendLine(message);
+  statusBarItem.tooltip = `Rextio: ${message}`;
+}
+
+/** Recompute the diagnostics summary label and repaint the status bar. */
+function updateDiagnosticsSummary(): void {
+  diagnosticsLabel = diagnosticsSummaryLabel(vscode.languages.getDiagnostics());
+  renderStatusBar();
+}
+
 function setStatus(kind: StatusKind): void {
+  serverStatus = kind;
+  renderStatusBar();
+}
+
+/**
+ * Repaint the status bar from the current server state and diagnostics summary.
+ * The server-state icon is always shown; the diagnostics label is only shown
+ * while the server is running (otherwise the state message is what matters).
+ */
+function renderStatusBar(): void {
+  const label = serverStatus === 'running' ? diagnosticsLabel : 'Rextio';
+  statusBarItem.text = `${statusIcon(serverStatus)} ${label}`;
+  statusBarItem.tooltip = statusTooltip(serverStatus);
+  statusBarItem.show();
+}
+
+function statusIcon(kind: StatusKind): string {
   switch (kind) {
     case 'starting':
-      statusBarItem.text = '$(sync~spin) Rextio';
-      statusBarItem.tooltip = 'Rextio: starting language server…';
-      break;
+      return '$(sync~spin)';
     case 'running':
-      statusBarItem.text = '$(check) Rextio';
-      statusBarItem.tooltip = 'Rextio: language server running (click to restart)';
-      break;
+      return '$(check)';
     case 'stopped':
-      statusBarItem.text = '$(circle-slash) Rextio';
-      statusBarItem.tooltip = 'Rextio: language server stopped (click to restart)';
-      break;
     case 'disabled':
-      statusBarItem.text = '$(circle-slash) Rextio';
-      statusBarItem.tooltip = 'Rextio: disabled (rextio.enable is false)';
-      break;
+      return '$(circle-slash)';
     case 'not-found':
-      statusBarItem.text = '$(warning) Rextio';
-      statusBarItem.tooltip =
-        'Rextio: rextio-lsp not found. Install it or set rextio.server.path (click to retry).';
-      break;
+      return '$(warning)';
   }
-  statusBarItem.show();
+}
+
+function statusTooltip(kind: StatusKind): string {
+  switch (kind) {
+    case 'starting':
+      return 'Rextio: starting language server…';
+    case 'running':
+      return 'Rextio: language server running (click to restart)';
+    case 'stopped':
+      return 'Rextio: language server stopped (click to restart)';
+    case 'disabled':
+      return 'Rextio: disabled (rextio.enable is false)';
+    case 'not-found':
+      return 'Rextio: rextio-lsp not found. Install it or set rextio.server.path (click to retry).';
+  }
 }

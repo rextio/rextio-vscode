@@ -1,0 +1,86 @@
+{
+  "name": "rextio-vscode",
+  "displayName": "Rextio",
+  "description": "Thin VS Code client for the Rextio language server (rextio-lsp): native-promotion route info and diagnostics for Rextio projects.",
+  "version": "0.1.0",
+  "publisher": "rextio",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rextio/rextio-vscode"
+  },
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:rextio.toml"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "rextio.restartServer",
+        "title": "Rextio: Restart Server"
+      }
+    ],
+    "configuration": {
+      "title": "Rextio",
+      "properties": {
+        "rextio.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the Rextio language client."
+        },
+        "rextio.server.path": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Absolute path to the `rextio-lsp` executable. When empty, the extension discovers it from the workspace virtual environment (`.venv`/`venv`) or from `PATH`."
+        },
+        "rextio.server.args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional command-line arguments passed to the rextio-lsp server."
+        },
+        "rextio.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace communication between VS Code and the Rextio language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.mjs --production",
+    "watch": "node esbuild.mjs --watch",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "pretest": "npm run check-types && npm run lint"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.0",
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.82.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.9.0",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.2.0"
+  }
+}

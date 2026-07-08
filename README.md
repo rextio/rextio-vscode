@@ -43,7 +43,7 @@ The **Rextio** status bar item (left, click to restart) shows the server state a
 | `rextio.codeLens.enable` | boolean | `true` | Show route-info code lenses above analysed functions. Sent to the server. |
 | `rextio.interpreter.path` | string | `""` | Python interpreter the server should analyse against. Empty ⇒ `null` (server chooses). |
 
-Changing any `rextio.*` setting restarts the language client so the change (including the initialization options below) takes effect.
+Changing a launch-time setting — `rextio.enable`, `rextio.server.path`, `rextio.server.args`, `rextio.codeLens.enable`, or `rextio.interpreter.path` — restarts the language client so the change (including the initialization options below) takes effect. Changing `rextio.trace.server` does **not** restart the client; the trace level is applied live.
 
 ### Initialization options
 

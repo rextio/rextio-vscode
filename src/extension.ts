@@ -7,6 +7,7 @@ import {
   State,
   TransportKind,
 } from 'vscode-languageclient/node';
+import { shouldRestartForChange } from './configuration';
 import { discoverServer } from './discovery';
 import { buildInitializationOptions } from './initialization';
 import { diagnosticsSummaryLabel } from './status';
@@ -43,12 +44,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     ),
   );
 
-  // Restart when any rextio.* setting changes. This covers the launch settings
-  // (server.path/args) as well as the initialization options plumbed into the
-  // client (codeLens.enable, interpreter.path) and the trace level.
+  // Restart only when a launch-time setting changes (server.path/args, enable,
+  // and the initialization options plumbed into the client — codeLens.enable,
+  // interpreter.path). `rextio.trace.server` is applied live by the client, so
+  // toggling it must not restart and drop server caches.
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration(CONFIG_SECTION)) {
+      if (shouldRestartForChange((section) => event.affectsConfiguration(section))) {
         void restart();
       }
     }),

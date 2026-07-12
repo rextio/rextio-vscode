@@ -18,7 +18,25 @@ The extension activates only when a workspace contains a `rextio.toml` file. It 
 2. A workspace virtual environment: `.venv/bin/rextio-lsp` then `venv/bin/rextio-lsp` under each workspace folder (on Windows, `Scripts\rextio-lsp.exe`).
 3. `rextio-lsp` on your `PATH`.
 
-If none launches, the **Rextio** status bar item shows a warning and a note is written to the *Rextio* output channel — no popups. Click the status bar item (or run **Rextio: Restart Server**) to retry after installing the server.
+If none launches, the **Rextio** status bar item shows a warning, a note is written to the *Rextio* output channel, and a single non-modal notification offers to install the server (see [Server not found](#server-not-found) below). Click the status bar item (or run **Rextio: Restart Server**) to retry after installing manually.
+
+### Server not found
+
+When `rextio-lsp` cannot be started, the extension shows one actionable information message:
+
+> The rextio-lsp language server was not found.
+
+Buttons (adaptive):
+
+| Choice | When shown | What it does |
+| --- | --- | --- |
+| **Install into .venv (Recommended)** | Only if the workspace has a `.venv` or `venv` with a Python interpreter | Runs `<venv-python> -m pip install rextio-lsp` and restarts the client on success |
+| **Install into system Python (Not recommended)** | Always | Runs `python3 -m pip install rextio-lsp` (`python` on Windows) |
+| **Skip** | Always | Dismisses and remembers the choice for this workspace so the prompt does not reappear until you run **Rextio: Restart Server** |
+
+Install progress uses a notification progress indicator; pip stdout/stderr is streamed to the *Rextio* output channel. On failure (for example the package is not yet on PyPI, or the system interpreter refuses installs under PEP 668), the output channel is shown and the status-bar warning remains — the extension never passes `--break-system-packages` or similar overrides.
+
+The server package installs from [PyPI](https://pypi.org/) as `rextio-lsp` once published. Until then, install from a local checkout or set `rextio.server.path` (see [Pointing at a development server](#pointing-at-a-development-server)).
 
 ## Status bar
 
@@ -57,7 +75,7 @@ At startup the client sends the server a fixed-shape `initializationOptions`, de
 
 ## Commands
 
-- **Rextio: Restart Server** (`rextio.restartServer`) — stop and relaunch the language server. Also bound to clicking the status bar item.
+- **Rextio: Restart Server** (`rextio.restartServer`) — stop and relaunch the language server. Also bound to clicking the status bar item. Clears a remembered **Skip** on the install prompt so the prompt can appear again if the server is still missing.
 - `rextio.showRouteInfo` — invoked by the server's route-info code lens with a function's qualified name. Writes `Route info requested for <qualname>` to the *Rextio* output channel and updates the status bar tooltip (no popup). Hidden from the command palette. Richer UI arrives in a later milestone.
 
 ## Development

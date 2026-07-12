@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import { spawn } from 'child_process';
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -10,6 +11,14 @@ import {
 import { shouldRestartForChange } from './configuration';
 import { discoverServer } from './discovery';
 import { buildInitializationOptions } from './initialization';
+import {
+  buildInstallOptions,
+  findWorkspaceVenvPython,
+  installChoiceFor,
+  installCommandFor,
+  isInstallPromptSkipped,
+  setInstallPromptSkipped,
+} from './install';
 import { diagnosticsSummaryLabel } from './status';
 
 const RESTART_COMMAND = 'rextio.restartServer';
@@ -19,6 +28,8 @@ const CONFIG_SECTION = 'rextio';
 let client: LanguageClient | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
+/** Set in activate; used for workspaceState (install-prompt skip). */
+let extensionContext: vscode.ExtensionContext;
 
 type StatusKind = 'starting' | 'running' | 'stopped' | 'disabled' | 'not-found';
 
@@ -28,6 +39,7 @@ let serverStatus: StatusKind = 'starting';
 let diagnosticsLabel = 'Rextio ✓';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  extensionContext = context;
   outputChannel = vscode.window.createOutputChannel('Rextio');
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
@@ -37,7 +49,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(outputChannel, statusBarItem);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(RESTART_COMMAND, () => restart()),
+    vscode.commands.registerCommand(RESTART_COMMAND, () => restartFromCommand()),
     vscode.commands.registerCommand(
       SHOW_ROUTE_INFO_COMMAND,
       (qualname: string) => showRouteInfo(qualname),
@@ -78,12 +90,14 @@ async function start(): Promise<void> {
     return;
   }
 
+  const workspaceFolders = (vscode.workspace.workspaceFolders ?? []).map(
+    (folder) => folder.uri.fsPath,
+  );
+
   const server = discoverServer(
     {
       configuredPath: config.get<string>('server.path'),
-      workspaceFolders: (vscode.workspace.workspaceFolders ?? []).map(
-        (folder) => folder.uri.fsPath,
-      ),
+      workspaceFolders,
     },
     { existsSync: fs.existsSync, platform: process.platform },
   );
@@ -131,8 +145,8 @@ async function start(): Promise<void> {
   try {
     await client.start();
   } catch (error) {
-    // Spawn failure (e.g. server not installed). Single unobtrusive notice via
-    // the status bar + output log — no modal popups. Retry via restart command.
+    // Spawn failure (e.g. server not installed). Status bar + output log always;
+    // one actionable non-modal notification offers install/skip when not skipped.
     const message = error instanceof Error ? error.message : String(error);
     outputChannel.appendLine(
       `Could not start rextio-lsp: ${message}\n` +
@@ -140,7 +154,116 @@ async function start(): Promise<void> {
         'Click the Rextio status bar item to retry.',
     );
     setStatus('not-found');
+    await maybeOfferInstall(workspaceFolders);
   }
+}
+
+/**
+ * When the server is missing, offer a single non-modal install prompt unless
+ * the user previously chose Skip in this workspace.
+ */
+async function maybeOfferInstall(workspaceFolders: string[]): Promise<void> {
+  if (
+    isInstallPromptSkipped((key) => extensionContext.workspaceState.get(key))
+  ) {
+    return;
+  }
+
+  const venvPython = findWorkspaceVenvPython(workspaceFolders, {
+    existsSync: fs.existsSync,
+    platform: process.platform,
+  });
+  const buttons = buildInstallOptions(venvPython !== null);
+  const choice = await vscode.window.showInformationMessage(
+    'The rextio-lsp language server was not found.',
+    ...buttons,
+  );
+
+  const action = installChoiceFor(choice);
+  if (action === null) {
+    return;
+  }
+  if (action === 'skip') {
+    await setInstallPromptSkipped(
+      (key, value) => extensionContext.workspaceState.update(key, value),
+      true,
+    );
+    outputChannel.appendLine(
+      'Install prompt skipped for this workspace. Run "Rextio: Restart Server" to see it again.',
+    );
+    return;
+  }
+
+  let command: string;
+  let args: string[];
+  try {
+    ({ command, args } = installCommandFor(
+      action,
+      venvPython,
+      process.platform,
+    ));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel.appendLine(`Could not build install command: ${message}`);
+    outputChannel.show(true);
+    return;
+  }
+
+  const exitCode = await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: 'Installing rextio-lsp…',
+    },
+    () => runPipInstall(command, args),
+  );
+
+  if (exitCode === 0) {
+    outputChannel.appendLine(
+      'rextio-lsp installed successfully; restarting language client…',
+    );
+    await restart();
+    return;
+  }
+
+  outputChannel.appendLine(
+    `Install failed with exit code ${exitCode}. See output above for details.`,
+  );
+  outputChannel.show(true);
+  // Status bar stays on not-found; user can retry via restart or the prompt again.
+}
+
+/**
+ * Spawn `command args` with no shell; stream stdout/stderr into the Rextio
+ * output channel. Resolves with the process exit code (1 on spawn error).
+ */
+function runPipInstall(command: string, args: string[]): Promise<number> {
+  return new Promise((resolve) => {
+    outputChannel.appendLine(`Running: ${command} ${args.join(' ')}`);
+    const child = spawn(command, args, { shell: false });
+
+    child.stdout?.on('data', (chunk: Buffer | string) => {
+      outputChannel.append(chunk.toString());
+    });
+    child.stderr?.on('data', (chunk: Buffer | string) => {
+      outputChannel.append(chunk.toString());
+    });
+    child.on('error', (error) => {
+      outputChannel.appendLine(`Install process failed to start: ${error.message}`);
+      resolve(1);
+    });
+    child.on('close', (code) => {
+      resolve(code ?? 1);
+    });
+  });
+}
+
+/** Command palette / status-bar restart: clear skip so the install prompt can return. */
+async function restartFromCommand(): Promise<void> {
+  await setInstallPromptSkipped(
+    (key, value) => extensionContext.workspaceState.update(key, value),
+    false,
+  );
+  await restart();
 }
 
 async function restart(): Promise<void> {

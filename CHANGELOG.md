@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Server install prompt
+
+- When `rextio-lsp` cannot be started, the client shows **one** actionable
+  non-modal notification (`showInformationMessage` with buttons) in addition
+  to the existing status-bar warning and output-channel line.
+- Adaptive choices: **Install into .venv (Recommended)** when a workspace
+  `.venv`/`venv` Python exists; always **Install into system Python (Not
+  recommended)** and **Skip**. Skip is remembered in `workspaceState`;
+  **Rextio: Restart Server** clears the skip so the prompt can return.
+- Install runs via `child_process.spawn` (no shell) under a notification
+  progress UI, streams pip output to the Rextio channel, and restarts the
+  client on success. Failures surface the channel and keep the warning;
+  no `--break-system-packages` overrides.
+
+### Amended notification rule
+
+- **Amendment:** the previous "never a modal popup / no popups on server not
+  found" rule is relaxed for this single non-modal install prompt only.
+  Other flows (route-info code lens, status bar) remain non-popup.
+
 ## 0.1.0 — 2026-07-12
 
 Initial release of the Rextio VS Code extension — a thin client for the
@@ -13,6 +35,7 @@ Initial release of the Rextio VS Code extension — a thin client for the
 - Activates only when the workspace contains a `rextio.toml`. When no server
   executable is found, a status-bar warning plus an output-channel line are
   shown — never a modal popup — and `Rextio: Restart Server` retries.
+  *(Superseded for the install prompt only; see Unreleased.)*
 - Configuration changes restart the client only for launch-time settings
   (`rextio.enable`, `rextio.server.path`, `rextio.server.args`,
   `rextio.codeLens.enable`, `rextio.interpreter.path`);

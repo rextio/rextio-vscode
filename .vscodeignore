@@ -8,9 +8,8 @@ eslint.config.mjs
 esbuild.mjs
 tsconfig.json
 vitest.config.ts
-# Repo README stays on GitHub; marketplace text is MARKETPLACE.md via --readme-path.
-# Excluding avoids case-insensitive collision with the packaged readme.md.
-README.md
+# README.md IS packaged (it is the marketplace/details text); only the dev doc is excluded.
+DEVELOPMENT.md
 **/*.map
 **/*.ts
 !dist/**

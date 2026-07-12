@@ -92,7 +92,7 @@
     "lint": "eslint src",
     "test": "vitest run",
     "pretest": "npm run check-types && npm run lint",
-    "package": "vsce package --readme-path MARKETPLACE.md"
+    "package": "vsce package"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

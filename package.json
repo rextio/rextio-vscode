@@ -16,6 +16,7 @@
     "Programming Languages",
     "Linters"
   ],
+  "icon": "media/icon.png",
   "main": "./dist/extension.js",
   "activationEvents": [
     "workspaceContains:rextio.toml"
@@ -90,7 +91,8 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vitest run",
-    "pretest": "npm run check-types && npm run lint"
+    "pretest": "npm run check-types && npm run lint",
+    "package": "vsce package --readme-path MARKETPLACE.md"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
@@ -99,6 +101,7 @@
     "@eslint/js": "^9.9.0",
     "@types/node": "^20.14.0",
     "@types/vscode": "^1.82.0",
+    "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.25.0",
     "eslint": "^9.9.0",
     "typescript": "^5.5.0",

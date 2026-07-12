@@ -1,5 +1,7 @@
 # rextio-vscode
 
+> Marketplace listing text lives in [MARKETPLACE.md](MARKETPLACE.md) (used by `vsce package --readme-path`).
+
 **VS Code extension for [Rextio](https://github.com/rextio/rextio) — see what goes native while you type.**
 
 A thin TypeScript client for [`rextio-lsp`](https://github.com/rextio/rextio-lsp). It discovers and launches the LSP server from your project's Python environment (consistent with Rextio's `[toolchain] python` resolution) and surfaces:

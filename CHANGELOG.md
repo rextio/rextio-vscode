@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Maintenance
+
+- Added GitHub Actions validation for the thin client: type checking, linting,
+  unit tests, production build, and VSIX packaging. It runs for `main` and the
+  active `0.1.1` integration branch; the packaged VSIX is retained as a CI
+  artifact.
+
 ### Server install prompt
 
 - When `rextio-lsp` cannot be started, the client shows **one** actionable

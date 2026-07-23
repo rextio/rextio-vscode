@@ -41,7 +41,7 @@ jobs:
         run: npm run package -- --out "$RUNNER_TEMP/rextio-vscode.vsix"
 
       - name: Upload VSIX
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: rextio-vscode-vsix
           path: ${{ runner.temp }}/rextio-vscode.vsix

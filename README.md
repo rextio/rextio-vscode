@@ -4,12 +4,10 @@ Surfaces Rextio’s native-vs-fallback analysis directly in the editor: which fu
 
 ## Release status
 
-Version **0.1.1** is release-ready as of 2026-07-26 but has not been published.
-The VS Code Marketplace continues to serve **0.1.0**, and Open VSX does not yet
-have a published Rextio extension. The approved 0.1.1 release targets both the
+This is version **0.1.1**, dated 2026-07-26. The release targets both the
 [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rextio.rextio-vscode)
-and [Open VSX](https://open-vsx.org/); availability will be claimed only after
-each registry confirms publication.
+and [Open VSX](https://open-vsx.org/) from the same verified VSIX. Registry
+availability is confirmed independently after publication.
 
 ## Requirements
 

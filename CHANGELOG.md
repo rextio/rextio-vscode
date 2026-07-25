@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.1.1 — 2026-07-26 (release candidate)
+## 0.1.1 — 2026-07-26
 
-Version `0.1.1` is prepared for the aggregate release PR. The VS Code
-Marketplace continues to serve `0.1.0`, and Open VSX remains unpublished until
-the approved release is uploaded and independently verified in each registry.
+Version `0.1.1` is the maintenance release for the validated thin client. Its
+distribution targets are the VS Code Marketplace and Open VSX, using the same
+verified VSIX; each registry listing is verified independently after
+publication.
 
 ### Maintenance
 
@@ -15,7 +16,7 @@ the approved release is uploaded and independently verified in each registry.
 
 ### Distribution
 
-- Prepare one identical `0.1.1` VSIX for the VS Code Marketplace and Open VSX.
+- Ship one identical `0.1.1` VSIX to the VS Code Marketplace and Open VSX.
   Neither registry is claimed as updated until its published listing is
   independently verified.
 

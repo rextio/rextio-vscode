@@ -69,7 +69,7 @@ Changing a launch-time setting — `rextio.enable`, `rextio.server.path`, `rexti
 
 ## Building and testing
 
-Requires Node.js 18+.
+Requires Node.js 20.19+.
 
 ```bash
 npm install         # install dependencies
@@ -79,6 +79,11 @@ npm run check-types # tsc --noEmit
 npm run lint        # eslint (flat config, typescript-eslint)
 npm test            # vitest unit tests (pure discovery logic)
 ```
+
+Pull requests and pushes to `main` run the same type check, lint, unit-test,
+production-build, and VSIX-packaging sequence in GitHub Actions. The resulting
+VSIX is available as a workflow artifact; this validates the extension package
+but does not publish it.
 
 Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host with the extension loaded.
 
@@ -101,6 +106,16 @@ npm run package   # vsce package -> rextio-vscode-<version>.vsix
 ```
 
 README.md is packaged as the extension's readme (the Marketplace/details page); DEVELOPMENT.md is excluded via `.vscodeignore`.
+
+Release `0.1.1` targets both registries from the same verified VSIX:
+
+```bash
+npx vsce publish --packagePath rextio-vscode-0.1.1.vsix --pat "$VSCODE_MARKETPLACE_TOKEN"
+npx ovsx publish rextio-vscode-0.1.1.vsix --pat "$OPEN_VSX_TOKEN"
+```
+
+These commands are release-operator steps, not CI. Do not claim either
+publication until its registry listing reports version `0.1.1`.
 
 ## License
 

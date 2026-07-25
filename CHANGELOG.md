@@ -1,6 +1,28 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 — 2026-07-26
+
+Version `0.1.1` is the maintenance release for the validated thin client. Its
+distribution targets are the VS Code Marketplace and Open VSX, using the same
+verified VSIX; each registry listing is verified independently after
+publication.
+
+### Maintenance
+
+- Added GitHub Actions validation for the thin client: type checking, linting,
+  unit tests, production build, and VSIX packaging. It runs for pushes to
+  `main` and for pull requests; the packaged VSIX is retained as a CI artifact.
+
+### Distribution
+
+- Ship one identical `0.1.1` VSIX to the VS Code Marketplace and Open VSX.
+  Neither registry is claimed as updated until its published listing is
+  independently verified.
+
+## 0.1.0 — 2026-07-12
+
+Initial release of the Rextio VS Code extension — a thin client for the
+`rextio-lsp` language server (the server is not bundled).
 
 ### Server install prompt
 
@@ -22,11 +44,6 @@
   found" rule is relaxed for this single non-modal install prompt only.
   Other flows (route-info code lens, status bar) remain non-popup.
 
-## 0.1.0 — 2026-07-12
-
-Initial release of the Rextio VS Code extension — a thin client for the
-`rextio-lsp` language server (the server is not bundled).
-
 ### Server discovery and lifecycle
 
 - Discovers `rextio-lsp` in order: the `rextio.server.path` setting, the
@@ -35,7 +52,7 @@ Initial release of the Rextio VS Code extension — a thin client for the
 - Activates only when the workspace contains a `rextio.toml`. When no server
   executable is found, a status-bar warning plus an output-channel line are
   shown — never a modal popup — and `Rextio: Restart Server` retries.
-  *(Superseded for the install prompt only; see Unreleased.)*
+  *(Superseded for the install prompt only by the 0.1.0 behavior above.)*
 - Configuration changes restart the client only for launch-time settings
   (`rextio.enable`, `rextio.server.path`, `rextio.server.args`,
   `rextio.codeLens.enable`, `rextio.interpreter.path`);

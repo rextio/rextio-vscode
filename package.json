@@ -2,7 +2,7 @@
   "name": "rextio-vscode",
   "displayName": "Rextio",
   "description": "Thin VS Code client for the Rextio language server (rextio-lsp): native-promotion route info and diagnostics for Rextio projects.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "rextio",
   "license": "MIT",
   "repository": {

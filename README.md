@@ -2,6 +2,15 @@
 
 Surfaces Rextio’s native-vs-fallback analysis directly in the editor: which functions go native (or plugin / shim / fallback / Numba), diagnostics with promotion guidance, and a status-bar summary—so you can see route and status while you type without leaving VS Code.
 
+## Release status
+
+Version **0.1.1** is release-ready as of 2026-07-26 but has not been published.
+The VS Code Marketplace continues to serve **0.1.0**, and Open VSX does not yet
+have a published Rextio extension. The approved 0.1.1 release targets both the
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rextio.rextio-vscode)
+and [Open VSX](https://open-vsx.org/); availability will be claimed only after
+each registry confirms publication.
+
 ## Requirements
 
 - A project with a `rextio.toml` at the workspace root (or under a workspace folder). The extension activates only when that file is present.

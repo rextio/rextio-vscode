@@ -107,6 +107,16 @@ npm run package   # vsce package -> rextio-vscode-<version>.vsix
 
 README.md is packaged as the extension's readme (the Marketplace/details page); DEVELOPMENT.md is excluded via `.vscodeignore`.
 
+Release `0.1.1` targets both registries from the same verified VSIX:
+
+```bash
+npx vsce publish --packagePath rextio-vscode-0.1.1.vsix --pat "$VSCODE_MARKETPLACE_TOKEN"
+npx ovsx publish rextio-vscode-0.1.1.vsix --pat "$OPEN_VSX_TOKEN"
+```
+
+These commands are release-operator steps, not CI. Do not claim either
+publication until its registry listing reports version `0.1.1`.
+
 ## License
 
 MIT

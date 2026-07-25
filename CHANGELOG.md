@@ -10,9 +10,8 @@ publication.
 ### Maintenance
 
 - Added GitHub Actions validation for the thin client: type checking, linting,
-  unit tests, production build, and VSIX packaging. It runs for `main` and the
-  active `0.1.1` integration branch; the packaged VSIX is retained as a CI
-  artifact.
+  unit tests, production build, and VSIX packaging. It runs for pushes to
+  `main` and for pull requests; the packaged VSIX is retained as a CI artifact.
 
 ### Distribution
 

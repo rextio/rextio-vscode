@@ -80,10 +80,10 @@ npm run lint        # eslint (flat config, typescript-eslint)
 npm test            # vitest unit tests (pure discovery logic)
 ```
 
-Pull requests and pushes to `main` and the active `0.1.1` integration branch
-run the same type check, lint, unit-test, production-build, and VSIX-packaging
-sequence in GitHub Actions. The resulting VSIX is available as a workflow
-artifact; this validates the extension package but does not publish it.
+Pull requests and pushes to `main` run the same type check, lint, unit-test,
+production-build, and VSIX-packaging sequence in GitHub Actions. The resulting
+VSIX is available as a workflow artifact; this validates the extension package
+but does not publish it.
 
 Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host with the extension loaded.
 

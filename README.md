@@ -1,80 +1,119 @@
-# Rextio
+# Rextio for VS Code
 
-Surfaces Rextio’s native-vs-fallback analysis directly in the editor: which functions go native (or plugin / shim / fallback / Numba), diagnostics with promotion guidance, and a status-bar summary—so you can see route and status while you type without leaving VS Code.
+<p align="center"><img src="./assets/readme/rextio-icon.png" width="112" alt="Rextio project icon"></p>
+<p align="center"><strong>See native routes, fallback reasons, and Rextio promotion guidance while you edit Python.</strong></p>
+<p align="center"><a href="https://marketplace.visualstudio.com/items?itemName=rextio.rextio-vscode"><img src="https://img.shields.io/badge/VS_Code_Marketplace-v0.1.1-007ACC" alt="Rextio 0.1.1 on the VS Code Marketplace"></a> <a href="https://open-vsx.org/extension/rextio/rextio-vscode"><img src="https://img.shields.io/open-vsx/v/rextio/rextio-vscode?label=Open%20VSX" alt="Rextio on Open VSX"></a> <a href="https://github.com/rextio/rextio-vscode/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a></p>
+<p align="center"><strong>English</strong> · <a href="./README.ko.md">한국어</a> · <a href="./README.zh-hans.md">简体中文</a> · <a href="./README.zh-hant.md">繁體中文</a> · <a href="./README.ja.md">日本語</a></p>
 
-## Release status
+This extension is the thin VS Code client for [`rextio-lsp`](https://github.com/rextio/rextio-lsp). It launches the language server from your project environment and presents its diagnostics, hovers, CodeLens, quick fixes, and status in VS Code.
 
-This is version **0.1.1**, dated 2026-07-26. The release targets both the
-[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rextio.rextio-vscode)
-and [Open VSX](https://open-vsx.org/) from the same verified VSIX. Registry
-availability is confirmed independently after publication.
+It does **not** analyze or compile Python itself, and it does not bundle the server. Rextio owns analysis and compilation; `rextio-lsp` translates Rextio's tooling contract into editor features; this extension handles discovery and UI.
 
-## Requirements
+## Install and see it work
 
-- A project with a `rextio.toml` at the workspace root (or under a workspace folder). The extension activates only when that file is present.
-- Install the analysis stack into the project’s virtual environment:
+1. Install version 0.1.1 from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rextio.rextio-vscode) or [Open VSX](https://open-vsx.org/extension/rextio/rextio-vscode).
 
-  ```bash
-  pip install rextio rextio-lsp
-  ```
+   ```bash
+   code --install-extension rextio.rextio-vscode
+   ```
 
-  The extension discovers `.venv` and `venv` automatically (and falls back to `PATH`).
+2. Install the analysis stack in your project's virtual environment:
 
-- Packages and source:
-  - [rextio on PyPI](https://pypi.org/project/rextio/)
-  - [rextio-lsp on PyPI](https://pypi.org/project/rextio-lsp/)
-  - [rextio on GitHub](https://github.com/rextio/rextio)
+   ```bash
+   python -m pip install rextio rextio-lsp
+   ```
 
-The language server is **not** bundled with this extension. Keeping `rextio-lsp` in the project environment keeps analysis in lock-step with the project’s Rextio version and enabled plugins. The extension coexists with Pylance, pyright, and ruff; it does no general Python linting of its own.
+3. Open a workspace containing `rextio.toml`, then open a Python file.
 
-## Features
+The extension discovers `.venv` or `venv`, starts `rextio-lsp` over stdio, and shows Rextio findings with `source: "rextio"`. Hover an analyzed function or look above it for a route such as `Rextio: native-direct`, `native-plugin:<id>`, `native-shim`, `fallback-python`, or `fallback-accelerated:numba`.
 
-| Feature | What you get |
+## What you get
+
+| Feature | Editor behavior |
 | --- | --- |
-| **Diagnostics** | Rextio findings with `source: "rextio"` and RXT / RXTP codes, plus promotion guidance in the message. |
-| **Hover** | Route and status info for analysed functions (native / plugin / shim / fallback / Numba). |
-| **Code lenses** | `Rextio: <route>` lenses above analysed functions (toggle with `rextio.codeLens.enable`). |
-| **Quick fix** | Apply `@rextio.exempt` when a diagnostic offers that code action. |
-| **Status bar** | Left-side **Rextio** item: server state plus a summary of Rextio diagnostics (`W:` warnings, `i:` info/hints). Click to restart. |
-| **Server install prompt** | If `rextio-lsp` is missing, a non-modal prompt offers three choices (when applicable): **Install into .venv (Recommended)**, **Install into system Python (Not recommended)**, or **Skip**. |
+| Diagnostics | RXT/RXTP findings and promotion guidance from `rextio-lsp` |
+| Hover | Route, native status, blockers, advisories, and suggestions |
+| CodeLens | `Rextio: <route>` above analyzed functions; configurable |
+| Quick fix | Apply `@rextio.exempt` when the server proves that edit safe |
+| Status bar | Server state and `W:<n> i:<n>` summary for Rextio diagnostics; click to restart |
+| Install prompt | If the server is missing: install into `.venv`, install into system Python, or skip |
+
+Rextio diagnostics are not duplicated or reinterpreted by the client. The extension coexists with Pylance/pyright and ruff and does no general Python completion, type checking, formatting, or linting.
+
+## How the pieces fit
+
+```text
+VS Code extension (discovery + UI)
+        ↓ stdio
+rextio-lsp (tooling-contract → LSP)
+        ↓ in-process or project subprocess
+Rextio + enabled plugins (analysis / optional native build)
+```
+
+Activation is limited to workspaces containing `rextio.toml`. Server discovery order is:
+
+1. explicit `rextio.server.path`;
+2. `.venv/bin/rextio-lsp` or `venv/bin/rextio-lsp` in a workspace folder (`Scripts\\rextio-lsp.exe` on Windows);
+3. `rextio-lsp` on `PATH`.
+
+If launch fails, the status bar stays in a warning state and the **Rextio** output channel records the error. The non-modal install prompt prefers a detected workspace virtual environment. It never adds `--break-system-packages`; **Skip** is remembered until **Rextio: Restart Server** is run.
 
 ## Settings
 
-| Setting | Type | Default | Description |
-| --- | --- | --- | --- |
-| `rextio.enable` | boolean | `true` | Enable the Rextio language client. |
-| `rextio.server.path` | string | `""` | Absolute path to the `rextio-lsp` executable. When empty, the extension discovers it from the workspace virtual environment (`.venv` / `venv`) or from `PATH`. |
-| `rextio.server.args` | string[] | `[]` | Additional command-line arguments passed to the rextio-lsp server. |
-| `rextio.codeLens.enable` | boolean | `true` | Show Rextio route-info code lenses above analysed functions. Sent to the server as initialization options. |
-| `rextio.interpreter.path` | string | `""` | Path to the Python interpreter the server should analyse against. When empty, the server chooses its own interpreter. |
-| `rextio.trace.server` | `off` \| `messages` \| `verbose` | `off` | Trace communication between VS Code and the Rextio language server (visible in the output channel). |
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `rextio.enable` | `true` | Start the language client |
+| `rextio.server.path` | `""` | Absolute server executable; empty enables discovery |
+| `rextio.server.args` | `[]` | Extra arguments passed to the server |
+| `rextio.codeLens.enable` | `true` | Show route CodeLens; forwarded in initialization options |
+| `rextio.interpreter.path` | `""` | Project Python interpreter forwarded to the server; empty becomes `null` |
+| `rextio.trace.server` | `off` | LSP trace: `off`, `messages`, or `verbose` |
 
-Changing a launch-time setting (`rextio.enable`, `rextio.server.path`, `rextio.server.args`, `rextio.codeLens.enable`, or `rextio.interpreter.path`) restarts the language client. Changing `rextio.trace.server` does not restart the client; the trace level is applied live.
+Changing a launch-time setting restarts the client. `rextio.trace.server` applies live without a restart.
 
-## Commands
+To run the server as a Python module, point `rextio.server.path` at the project Python and set:
 
-- **Rextio: Restart Server** — stop and relaunch the language server. Also bound to clicking the status bar item. Clears a remembered **Skip** on the install prompt so the prompt can appear again if the server is still missing.
+```jsonc
+{
+  "rextio.server.path": "/path/to/project/.venv/bin/python",
+  "rextio.server.args": ["-m", "rextio_lsp"]
+}
+```
 
-## Troubleshooting
+## Commands and troubleshooting
 
-### Server not found
+- **Rextio: Restart Server** stops and relaunches the client and clears a remembered install-prompt skip.
+- Click the left-side Rextio status item for the same restart action.
+- Open **View → Output → Rextio** for discovery, pip install output, LSP trace, and route-info notices.
+- If the server is missing, prefer **Install into .venv (Recommended)** or install it manually with `python -m pip install rextio-lsp`, then restart.
 
-If the status bar shows a warning and the install prompt appears:
+## Compatibility
 
-1. Prefer **Install into .venv (Recommended)** when the workspace has a `.venv` or `venv`.
-2. Or install yourself: `pip install rextio-lsp` into the project environment, then click the status bar (or run **Rextio: Restart Server**).
-3. Or set `rextio.server.path` to the absolute path of your `rextio-lsp` executable (or a Python interpreter plus `rextio.server.args` such as `["-m", "rextio_lsp"]`).
+| Component | Contract |
+| --- | --- |
+| Extension | `0.1.1`, released 2026-07-26 |
+| Identifier | `rextio.rextio-vscode` |
+| VS Code engine | `^1.82.0` |
+| Language client | `vscode-languageclient` `^9.0.1` |
+| Server | external `rextio-lsp`; not bundled |
+| Activation | `workspaceContains:rextio.toml` |
+| Distribution | same verified VSIX targets VS Code Marketplace and Open VSX |
 
-Install progress and pip output stream to the **Rextio** output channel. On failure (for example PEP 668 system Python, or package not yet published), that channel is shown and the status-bar warning remains.
+## Development
 
-### Where is the Rextio output channel?
+Requires Node.js 20.19+.
 
-**View → Output**, then choose **Rextio** in the dropdown. Use it for discovery logs, install/pip output, LSP trace (`rextio.trace.server`), and route-info notices from code lenses.
+```bash
+npm install
+npm run check-types
+npm run lint
+npm test
+npm run build
+npm run package
+```
 
-## Contributing
-
-Build, test, and packaging instructions live in [DEVELOPMENT.md](https://github.com/rextio/rextio-vscode/blob/main/DEVELOPMENT.md).
+See [DEVELOPMENT.md](https://github.com/rextio/rextio-vscode/blob/main/DEVELOPMENT.md) for extension-host and packaging details.
 
 ## License
 
-MIT
+[MIT](LICENSE)
